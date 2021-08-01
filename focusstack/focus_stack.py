@@ -172,7 +172,7 @@ def stack(path='.', pattern=None, files=None, savepath='.', kernel_size=5,
     - savepath: str or Path object; where to save the final, stacked image
 
     - kernel_size: Size of the laplacian window
-    - blur_size: How big of a kernal to use for the gaussian blur
+    - blur_size: How big of a kernel to use for the gaussian blur
 
         Generally, keeping these two values the same or very close works well.
         Also, odd numbers, please...

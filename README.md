@@ -28,7 +28,7 @@ stack(files=['IMG_3331.JPG', 'IMG_3332.JPG'])
 stack(savepath='img/processed')
 
 # use ORB image matching algorithm (default: SIFT, can also be SURF but only
-# for uers with a license to use SURF)
+# for users with a license to use SURF)
 stack(algo='orb')
 
 # Change kernel and blur sizes (default: 5 for both)
