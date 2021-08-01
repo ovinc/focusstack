@@ -50,14 +50,12 @@ def find_homography(image_1_kp, image_2_kp, matches):
     return homography
 
 
-def align_images(images, use_sift=True, output=False, nfeatures=1000):
+def align_images(images, algo='sift', output=False, nfeatures=1000):
     """Align images so they overlap properly.
 
     Parameters
     ----------
-    - use_sift: bool (default: True)
-        SIFT generally produces better results, but it is not FOSS, so chose
-        the feature detector that suits the needs of your project. ORB does OK.
+    - algo (str): algorithm used to find image features: 'sift', 'surf', 'orb'
 
     - output: bool (default: False)
         If you find that there's a large amount of ghosting, it may be because
@@ -66,10 +64,14 @@ def align_images(images, use_sift=True, output=False, nfeatures=1000):
     """
     outimages = []
 
-    if use_sift:
+    if algo == 'sift':
         detector = cv2.xfeatures2d.SIFT_create()
-    else:
+    elif algo == 'surf':
+        detector = cv2.xfeatures2d.SURF_create()
+    elif algo == 'orb':
         detector = cv2.ORB_create(nfeatures=nfeatures)
+    else:
+        raise ValueError(f'{algo} not a supported algorithm')
 
     #   We assume that image 0 is the "base" image and align everything to it
     print("Detecting features of base image")
@@ -81,7 +83,7 @@ def align_images(images, use_sift=True, output=False, nfeatures=1000):
         print("Aligning image {}".format(i))
         image_i_kp, image_i_desc = detector.detectAndCompute(images[i], None)
 
-        if use_sift:
+        if algo in ('sift', 'surf'):
             bf = cv2.BFMatcher()
             # This returns the top two matches for each feature point (list of list)
             pairMatches = bf.knnMatch(image_i_desc, image_1_desc, k=2)
@@ -124,14 +126,14 @@ def do_lap(image, kernel_size=5, blur_size=5):
     return cv2.Laplacian(blurred, cv2.CV_64F, ksize=kernel_size)
 
 
-def focus_stack(unimages, use_sift=True, kernel_size=5, blur_size=5):
+def focus_stack(unimages, kernel_size=5, blur_size=5, algo='sift'):
     """Find the points of best focus in all images and produce a merged result.
 
     Parameters
     ----------
     - use_sift: book (default False): see align_images()
     """
-    images = align_images(unimages, use_sift=use_sift)
+    images = align_images(unimages, algo=algo)
 
     print("Computing the laplacian of the blurred images")
     laps = []
@@ -156,8 +158,8 @@ def focus_stack(unimages, use_sift=True, kernel_size=5, blur_size=5):
     return 255 - output
 
 
-def stack(path='.', pattern=None, files=None, savepath='.', kernel_size=5, blur_size=5,
-          use_sift=True):
+def stack(path='.', pattern=None, files=None, savepath='.', kernel_size=5,
+          blur_size=5, algo='sift'):
     """Perform focus stacking for images in specified path.
 
     Parameters
@@ -175,7 +177,7 @@ def stack(path='.', pattern=None, files=None, savepath='.', kernel_size=5, blur_
         Generally, keeping these two values the same or very close works well.
         Also, odd numbers, please...
 
-    - use_sift: bool (default: True)
+    - algo (str): algorithm used to find image features: 'sift', 'surf', 'orb'
 
         SIFT generally produces better results, but it is not FOSS, so chose
         the feature detector that suits the needs of your project. ORB does OK.
@@ -193,7 +195,7 @@ def stack(path='.', pattern=None, files=None, savepath='.', kernel_size=5, blur_
         img = cv2.imread(str(image_file.resolve()))
         focusimages.append(img)
 
-    merged_image = focus_stack(focusimages, use_sift=use_sift,
+    merged_image = focus_stack(focusimages, algo=algo,
                                kernel_size=kernel_size, blur_size=blur_size)
 
     merged_file = str((Path(savepath) / "merged.png").resolve())

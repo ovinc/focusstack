@@ -27,8 +27,9 @@ stack(files=['IMG_3331.JPG', 'IMG_3332.JPG'])
 # save processed image in a different directory
 stack(savepath='img/processed')
 
-# use SIFT image matching algorithm (default: ORB)
-stack(use_sift=True)
+# use ORB image matching algorithm (default: SIFT, can also be SURF but only
+# for uers with a license to use SURF)
+stack(algo='orb')
 
 # Change kernel and blur sizes (default: 5 for both)
 stack(kernel_size=11, blur_size=11)
