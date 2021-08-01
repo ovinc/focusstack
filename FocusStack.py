@@ -26,7 +26,7 @@ The logic is roughly the following:
 
 4.  For each pixel [x,y] in the output image, copy the pixel [x,y] from
     the input image which has the largest gradient [x,y]
-    
+
 
 This algorithm was inspired by the high-level description given at
 
@@ -41,7 +41,7 @@ def findHomography(image_1_kp, image_2_kp, matches):
     image_1_points = np.zeros((len(matches), 1, 2), dtype=np.float32)
     image_2_points = np.zeros((len(matches), 1, 2), dtype=np.float32)
 
-    for i in range(0,len(matches)):
+    for i in range(0, len(matches)):
         image_1_points[i] = image_1_kp[matches[i].queryIdx].pt
         image_2_points[i] = image_2_kp[matches[i].trainIdx].pt
 
@@ -69,22 +69,22 @@ def align_images(images):
         detector = cv2.ORB_create(1000)
 
     #   We assume that image 0 is the "base" image and align everything to it
-    print "Detecting features of base image"
+    print("Detecting features of base image")
     outimages.append(images[0])
-    image1gray = cv2.cvtColor(images[0],cv2.COLOR_BGR2GRAY)
+    image1gray = cv2.cvtColor(images[0], cv2.COLOR_BGR2GRAY)
     image_1_kp, image_1_desc = detector.detectAndCompute(image1gray, None)
 
-    for i in range(1,len(images)):
-        print "Aligning image {}".format(i)
+    for i in range(1, len(images)):
+        print("Aligning image {}".format(i))
         image_i_kp, image_i_desc = detector.detectAndCompute(images[i], None)
 
         if use_sift:
             bf = cv2.BFMatcher()
             # This returns the top two matches for each feature point (list of list)
-            pairMatches = bf.knnMatch(image_i_desc,image_1_desc, k=2)
+            pairMatches = bf.knnMatch(image_i_desc, image_1_desc, k=2)
             rawMatches = []
-            for m,n in pairMatches:
-                if m.distance < 0.7*n.distance:
+            for m, n in pairMatches:
+                if m.distance < 0.7 * n.distance:
                     rawMatches.append(m)
         else:
             bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
@@ -93,8 +93,6 @@ def align_images(images):
         sortMatches = sorted(rawMatches, key=lambda x: x.distance)
         matches = sortMatches[0:128]
 
-
-
         hom = findHomography(image_i_kp, image_1_kp, matches)
         newimage = cv2.warpPerspective(images[i], hom, (images[i].shape[1], images[i].shape[0]), flags=cv2.INTER_LINEAR)
 
@@ -102,8 +100,6 @@ def align_images(images):
         # If you find that there's a large amount of ghosting, it may be because one or more of the input
         # images gets misaligned.  Outputting the aligned images may help diagnose that.
         # cv2.imwrite("aligned{}.png".format(i), newimage)
-
-
 
     return outimages
 
@@ -117,7 +113,7 @@ def doLap(image):
                             # Generally, keeping these two values the same or very close works well
                             # Also, odd numbers, please...
 
-    blurred = cv2.GaussianBlur(image, (blur_size,blur_size), 0)
+    blurred = cv2.GaussianBlur(image, (blur_size, blur_size), 0)
     return cv2.Laplacian(blurred, cv2.CV_64F, ksize=kernel_size)
 
 #
@@ -126,14 +122,14 @@ def doLap(image):
 def focus_stack(unimages):
     images = align_images(unimages)
 
-    print "Computing the laplacian of the blurred images"
+    print("Computing the laplacian of the blurred images")
     laps = []
     for i in range(len(images)):
-        print "Lap {}".format(i)
-        laps.append(doLap(cv2.cvtColor(images[i],cv2.COLOR_BGR2GRAY)))
+        print("Lap {}".format(i))
+        laps.append(doLap(cv2.cvtColor(images[i], cv2.COLOR_BGR2GRAY)))
 
     laps = np.asarray(laps)
-    print "Shape of array of laplacians = {}".format(laps.shape)
+    print("Shape of array of laplacians = {}".format(laps.shape))
 
     output = np.zeros(shape=images[0].shape, dtype=images[0].dtype)
 
@@ -141,7 +137,7 @@ def focus_stack(unimages):
     maxima = abs_laps.max(axis=0)
     bool_mask = abs_laps == maxima
     mask = bool_mask.astype(np.uint8)
-    for i in range(0,len(images)):
-        output = cv2.bitwise_not(images[i],output, mask=mask[i])
-		
-    return 255-output
+    for i in range(0, len(images)):
+        output = cv2.bitwise_not(images[i], output, mask=mask[i])
+
+    return 255 - output
