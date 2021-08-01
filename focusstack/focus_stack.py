@@ -31,6 +31,7 @@ This algorithm was inspired by the high-level description given at
 http://stackoverflow.com/questions/15911783/what-are-some-common-focus-stacking-algorithms
 """
 
+from pathlib import Path
 import numpy as np
 import cv2
 
@@ -123,9 +124,14 @@ def do_lap(image, kernel_size=5, blur_size=5):
     return cv2.Laplacian(blurred, cv2.CV_64F, ksize=kernel_size)
 
 
-def focus_stack(unimages):
-    """Find the points of best focus in all images and produce a merged result."""
-    images = align_images(unimages)
+def focus_stack(unimages, use_sift=True):
+    """Find the points of best focus in all images and produce a merged result.
+
+    Parameters
+    ----------
+    - use_sift: book (default False): see align_images()
+    """
+    images = align_images(unimages, use_sift=use_sift)
 
     print("Computing the laplacian of the blurred images")
     laps = []
@@ -146,3 +152,27 @@ def focus_stack(unimages):
         output = cv2.bitwise_not(images[i], output, mask=mask[i])
 
     return 255 - output
+
+
+def stack(path='.', savepath='.', pattern=None, use_sift=True):
+    """Perform focus stacking for images in specified path.
+
+    Parameters
+    ----------
+    path: str or Path object in which image files are located
+    extension (default None): extension of img files to consider (e.g. '.jpg')
+    """
+    pattern = '*.*' if pattern is None else pattern
+    image_files = Path(path).glob(pattern)
+
+    focusimages = []
+
+    for image_file in image_files:
+        print(f"Reading in file {image_file.name}")
+        img = cv2.imread(str(image_file.resolve()))
+        focusimages.append(img)
+
+    merged_image = focus_stack(focusimages, use_sift=use_sift)
+    merged_file = str((Path(savepath) / "merged.png").resolve())
+
+    cv2.imwrite(merged_file, merged_image)

@@ -7,4 +7,12 @@
 
 *.pyc
 
-merged.png
+*/merged.png
+
+.eggs/
+
+*egg-info*
+
+*__pycache__*
+
+.pytest_cache
