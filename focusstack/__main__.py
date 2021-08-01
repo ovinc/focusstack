@@ -12,5 +12,4 @@
 from pathlib import Path
 from focusstack import stack
 
-current_directory = Path('.')
 stack(path='.')

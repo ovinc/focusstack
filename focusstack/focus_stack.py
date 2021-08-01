@@ -50,7 +50,7 @@ def find_homography(image_1_kp, image_2_kp, matches):
     return homography
 
 
-def align_images(images, use_sift=True, output=False):
+def align_images(images, use_sift=True, output=False, nfeatures=1000):
     """Align images so they overlap properly.
 
     Parameters
@@ -69,7 +69,7 @@ def align_images(images, use_sift=True, output=False):
     if use_sift:
         detector = cv2.xfeatures2d.SIFT_create()
     else:
-        detector = cv2.ORB_create(1000)
+        detector = cv2.ORB_create(nfeatures=nfeatures)
 
     #   We assume that image 0 is the "base" image and align everything to it
     print("Detecting features of base image")
@@ -124,7 +124,7 @@ def do_lap(image, kernel_size=5, blur_size=5):
     return cv2.Laplacian(blurred, cv2.CV_64F, ksize=kernel_size)
 
 
-def focus_stack(unimages, use_sift=True):
+def focus_stack(unimages, use_sift=True, kernel_size=5, blur_size=5):
     """Find the points of best focus in all images and produce a merged result.
 
     Parameters
@@ -137,7 +137,9 @@ def focus_stack(unimages, use_sift=True):
     laps = []
     for i in range(len(images)):
         print("Lap {}".format(i))
-        laps.append(do_lap(cv2.cvtColor(images[i], cv2.COLOR_BGR2GRAY)))
+        lap = do_lap(cv2.cvtColor(images[i], cv2.COLOR_BGR2GRAY),
+                     kernel_size=kernel_size, blur_size=blur_size)
+        laps.append(lap)
 
     laps = np.asarray(laps)
     print("Shape of array of laplacians = {}".format(laps.shape))
@@ -154,16 +156,35 @@ def focus_stack(unimages, use_sift=True):
     return 255 - output
 
 
-def stack(path='.', savepath='.', pattern=None, use_sift=True):
+def stack(path='.', pattern=None, files=None, savepath='.', kernel_size=5, blur_size=5,
+          use_sift=True):
     """Perform focus stacking for images in specified path.
 
     Parameters
     ----------
-    path: str or Path object in which image files are located
-    extension (default None): extension of img files to consider (e.g. '.jpg')
+
+    - path: str or Path object in which image files are located
+    - pattern: glob pattern of files consider (e.g. '*.jpg')
+    - files: if specified, take these specific files instead (must be an
+      iterable of str or path objects) [overrides previous parameters]
+    - savepath: str or Path object; where to save the final, stacked image
+
+    - kernel_size: Size of the laplacian window
+    - blur_size: How big of a kernal to use for the gaussian blur
+
+        Generally, keeping these two values the same or very close works well.
+        Also, odd numbers, please...
+
+    - use_sift: bool (default: True)
+
+        SIFT generally produces better results, but it is not FOSS, so chose
+        the feature detector that suits the needs of your project. ORB does OK.
     """
-    pattern = '*.*' if pattern is None else pattern
-    image_files = Path(path).glob(pattern)
+    if files is None:
+        pattern = '*.*' if pattern is None else pattern
+        image_files = Path(path).glob(pattern)
+    else:
+        image_files = (Path(file) for file in files)
 
     focusimages = []
 
@@ -172,7 +193,9 @@ def stack(path='.', savepath='.', pattern=None, use_sift=True):
         img = cv2.imread(str(image_file.resolve()))
         focusimages.append(img)
 
-    merged_image = focus_stack(focusimages, use_sift=use_sift)
+    merged_image = focus_stack(focusimages, use_sift=use_sift,
+                               kernel_size=kernel_size, blur_size=blur_size)
+
     merged_file = str((Path(savepath) / "merged.png").resolve())
 
     cv2.imwrite(merged_file, merged_image)

@@ -18,14 +18,20 @@ from focusstack import stack
 # process all files in current directory
 stack()
 
-# process all .jpg files in the specified directory
+# process all .jpg files in the specified directory (case-sensitive)
 stack('img/to_stack/', pattern='*.jpg')
+
+# Specify iterable of files instead
+stack(files=['IMG_3331.JPG', 'IMG_3332.JPG'])
 
 # save processed image in a different directory
 stack(savepath='img/processed')
 
 # use SIFT image matching algorithm (default: ORB)
-stack('img/to_stack/', pattern='*.jpg')
+stack(use_sift=True)
+
+# Change kernel and blur sizes (default: 5 for both)
+stack(kernel_size=11, blur_size=11)
 ```
 
 It is also possible to use the module from the console (e.g. bash) directly:
@@ -58,3 +64,17 @@ you to experiment with the code without having to shoot your own set of images.
 
 This project is Copyright 2015 Charles McGuinness, and is released under the
 Apache 2.0 license (see license file for precise details).
+
+
+# Testing
+
+With pytest : cd into root of package, and
+```bash
+pytest
+```
+
+
+# Contributors
+
+Olivier Vincent
+(ovinc.py@gmail.com)
