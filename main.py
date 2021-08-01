@@ -1,6 +1,6 @@
 import os
 import cv2
-import FocusStack
+import focus_stack
 """
 
     Focus stack driver program
@@ -22,7 +22,7 @@ def stackHDRs(image_files):
         print("Reading in file {}".format(img))
         focusimages.append(cv2.imread("input/{}".format(img)))
 
-    merged = FocusStack.focus_stack(focusimages)
+    merged = focus_stack.focus_stack(focusimages)
     cv2.imwrite("merged.png", merged)
 
 
@@ -31,7 +31,6 @@ if __name__ == "__main__":
     for img in image_files:
         if img.split(".")[-1].lower() not in ["jpg", "jpeg", "png"]:
             image_files.remove(img)
-
 
     stackHDRs(image_files)
     print("That's All Folks!")
